@@ -1,0 +1,1 @@
+make clean && make && nxlink -a 192.168.1.159 enablechatcheatsnx.nro
