@@ -67,32 +67,23 @@ Result get_save(u64 *application_id, AccountUid *uid) {
 
 int main(int argc, char **argv)
 {
-    printf("enablecheatcheatsnx - press + to exit.\n\n")
+    printf("enablecheatcheatsnx - press + to exit.\n\n");
     Result rc=0;
 
     DIR* dir;
     DIR* dir2;
     struct dirent* ent;
-    // struct dirent* ent2;
 
     AccountUid uid={0};
     u64 application_id=0x0100E65002BB8000;//ApplicationId of the save to mount, in this case SDV.
-    // u64 application_id=0x0100FFF006BB8000;//ApplicationId of the save to mount, in this case SDV.
 
     consoleInit(NULL);
 
-    // Configure our supported input layout: a single player with standard controller styles
     padConfigureInput(1, HidNpadStyleSet_NpadStandard);
 
-    // Initialize the default gamepad (which reads handheld mode inputs as well as the first connected controller)
     PadState pad;
     padInitializeDefault(&pad);
 
-    //Get the userID for save mounting. To mount common savedata, use an all-zero userID.
-
-    //Try to find savedata to use with get_save() first, otherwise fallback to the above hard-coded TID + the userID from accountGetPreselectedUser(). Note that you can use either method.
-    //See the account example for getting account info for an userID.
-    //See also the app_controldata example for getting info for an application_id.
     if (R_FAILED(get_save(&application_id, &uid))) {
         rc = accountInitialize(AccountServiceType_Application);
         if (R_FAILED(rc)) {
@@ -111,102 +102,71 @@ int main(int argc, char **argv)
 
     if (R_SUCCEEDED(rc)) {
         printf("Using application_id=0x%016lx\n", application_id);
-        // printf("Using application_id=0x%016lx uid: 0x%lx 0x%lx\n", application_id, uid.uid[1], uid.uid[0]);
     }
 
-    //You can use any device-name. If you want multiple saves mounted at the same time, you must use different device-names for each one.
     if (R_SUCCEEDED(rc)) {
-        rc = fsdevMountSaveData("save", application_id, uid);//See also libnx fs.h/fs_dev.h
+        rc = fsdevMountSaveData("save", application_id, uid);
         if (R_FAILED(rc)) {
             printf("fsdevMountSaveData() failed: 0x%x\n", rc);
         }
     }
 
-    //At this point you can use the mounted device with standard stdio.
-    //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
-    //See also libnx fs_dev.h for fsdevCommitDevice.
-
     if (R_SUCCEEDED(rc)) {
-        // dir = opendir("save:/");//Open the "save:/" directory.
-        dir2 = opendir("save:/");//Open the "save:/" directory.
-        if(dir2==NULL)
-        {
+        dir2 = opendir("save:/");
+        if(dir2==NULL) {
             printf("Failed to open dir.\n");
-        }
-        else
-            {
-                int file_count = 0;
-                dir = opendir("save:/");
-                if (dir == NULL) {
-                    perror("Could not open directory");
-                    return 1;
-                }
-
-                // First loop: Count valid files in the directory
-                while ((ent = readdir(dir)) != NULL) {
-                    if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                        file_count++;
-                    }
-                }
-                closedir(dir); // Close after counting
-
-                // Allocate memory for storing file names
-                // char *filesList[count];
-
-                // Re-open the directory to read entries again
-                dir = opendir("save:/");
-                if (dir == NULL) {
-                    perror("Could not re-open directory");
-                    return 1;
-                }
-
-                // Second loop: Store file names in file_list
-                int i = 0;
-                while ((ent = readdir(dir)) != NULL) {
-                    if (strcmp(ent->d_name, "startup_preferences") == 0) {
-                        file_count--;
-                        continue;
-                    } else if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
-                        file_list[i] = (char*) malloc(strlen(ent->d_name) + 1); // Allocate memory for each file name
-                        if (file_list[i] != NULL) { // Check allocation success
-                            strcpy(file_list[i], ent->d_name); // Copy file name
-                            i++;
-                        }
-                    }
-                }
-                closedir(dir);
-
-                // Print stored file names
-                printf("Dir-listing for 'save:/' (%d items):\n\n", file_count);
-                CHOSEN_LIST_MAX = file_count - 1;
-                for (i = 0; i < file_count; i++) {
-                    printf("(%d) %s\n", i, file_list[i]);
-                    // free(filesList[i]); // Free each file name after printing
-                }
-                // file_count = count;
-                // file_list = filesList;
-
-                printf("\nUse up/down to change selected option. A to select\n");
-                printf("Chosen option: ?\r"); // \r makes the line be overwritten by the next print
-
-                // while (!CHOSEN_COMMITTED) {}
-                // printf("!!!!Chosen option: %d\n", CHOSEN_LIST_INT); // \r makes the line be overwritten by the next print
-
+        } else {
+            int file_count = 0;
+            dir = opendir("save:/");
+            if (dir == NULL) {
+                perror("Could not open directory");
+                return 1;
             }
 
-        //When you are done with savedata, you can use the below.
-        //Any devices still mounted at app exit are automatically unmounted.
-        // fsdevUnmountDevice("save");
-        //After modifying savedata, in order for the changes to take affect you must use: rc = fsdevCommitDevice("save");
+            while ((ent = readdir(dir)) != NULL) {
+                if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+                    file_count++;
+                }
+            }
+            closedir(dir);
+
+            dir = opendir("save:/");
+            if (dir == NULL) {
+                perror("Could not re-open directory");
+                return 1;
+            }
+
+            int i = 0;
+            while ((ent = readdir(dir)) != NULL) {
+                if (strcmp(ent->d_name, "startup_preferences") == 0) {
+                    file_count--;
+                    continue;
+                } else if (strcmp(ent->d_name, ".") != 0 && strcmp(ent->d_name, "..") != 0) {
+                    file_list[i] = (char*) malloc(strlen(ent->d_name) + 1); 
+                    if (file_list[i] != NULL) { 
+                        strcpy(file_list[i], ent->d_name); 
+                        i++;
+                    }
+                }
+            }
+            closedir(dir);
+
+            printf("Dir-listing for 'save:/' (%d items):\n\n", file_count);
+            CHOSEN_LIST_MAX = file_count - 1;
+            for (i = 0; i < file_count; i++) {
+                printf("(%d) %s\n", i, file_list[i]);
+            }
+
+            printf("\nUse up/down to change selected option. A to select\n");
+            printf("Chosen option: ?\r"); // \r makes the line be overwritten by the next print
+        }
     }
 
     // Main loop
     while(appletMainLoop())
     {
-        // Scan the gamepad. This should be done once for each frame
         padUpdate(&pad);
 
-        // padGetButtonsDown returns the set of buttons that have been newly pressed in this frame compared to the previous one
         u64 kDown = padGetButtonsDown(&pad);
 
         if (kDown & HidNpadButton_Plus) break; // break in order to return to hbmenu
@@ -230,15 +190,8 @@ int main(int argc, char **argv)
 
                 std::string save_file_path = "save:/" + std::string(file_list[CHOSEN_LIST_INT]) + "/" + std::string(file_list[CHOSEN_LIST_INT]);
                 std::string backup_file_path = save_file_path + ".eccnx_bak";
-                // char* save_file_path = sprintf("save:/%s/%s", file_list[CHOSEN_LIST_INT], file_list[CHOSEN_LIST_INT]);
-                // printf("%s, %s\n", save_file_path.c_str(), backup_file_path.c_str());
 
-
-                // if (fs::exists(backup_file_path))
-                //     // std::remove(backup_file_path.c_str());
-                //     printf("already installed xd\n");
                 if (access(backup_file_path.c_str(), 0 ) == 0) { // not sure why fs::exists doesn't work, but it doesn't?
-                    // printf("already exists\n");
                     printf("Removing existing backup.\n");
                     std::remove(backup_file_path.c_str());
                 }
@@ -247,7 +200,6 @@ int main(int argc, char **argv)
                     continue;
                 }
 
-                // fs::copy(fs::path(save_file_path), fs::path(backup_file_path));
                 printf("Backing up save...\n");
                 CopyFile(save_file_path.c_str(), backup_file_path.c_str());
                 printf("\n");
@@ -287,7 +239,6 @@ int main(int argc, char **argv)
 
                 if (decoded_save.find("<allowChatCheats>") == NPOS) {
                     // save doesnt have the tag
-                    // printf("Save contains <allowChatCheats>.\n")
                     size_t pos = decoded_save.find(OPENING_SAVE_TAG);
                     decoded_save.insert(pos + 1, ALLOW_CHAT_CHEATS_TRUE);
                     printf("\nAdded and enabled allowChatCheats.");
@@ -303,12 +254,7 @@ int main(int argc, char **argv)
                 writeStringToFile(decoded_save, save_file_path);
                 fsdevCommitDevice("save");
                 printf("\nCommitted save. You may now exit.\n");
-                
-
-                // if (fs::exists(save_file_path)) /
-                
             }
-            // printf("\n!!!!Chosen option: %d\n", CHOSEN_LIST_INT);
         }
 
         consoleUpdate(NULL);
