@@ -4,8 +4,8 @@ A homebrew application to enable [cheat commands](https://stardewvalleywiki.com/
 
 ## Using
 
-1. Download lastest release from [here](https://github.com/anotherpillow/Iridium/releases)
-2. Put it into `sdmc:/switch` and open it.
+1. Download lastest release from [here](https://github.com/anotherpillow/enablechatcheatsnx/releases)
+2. Put it into `sdmc:/switch` and open it through hbmenu.
 
 ## Images
 
