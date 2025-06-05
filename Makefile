@@ -44,7 +44,7 @@ DATA		:=	data
 INCLUDES	:=	include
 
 APP_AUTHOR  := "AnotherPillow"
-APP_VERSION := "1.0.0"
+APP_VERSION := "1.1.0"
 APP_TITLE   := "enablechatcheatsnx"
 # ICON        := "icon.jpg"
 

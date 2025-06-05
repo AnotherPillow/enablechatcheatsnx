@@ -7,7 +7,6 @@ A homebrew application to enable [cheat commands](https://stardewvalleywiki.com/
 1. Download lastest release from [here](https://github.com/anotherpillow/enablechatcheatsnx/releases)
 2. Put it into `sdmc:/switch` and open it through hbmenu.
 
-NOTE: Currently, you cannot choose which account it modifies the save from. This is a TODO to fix.
 
 ## Images
 

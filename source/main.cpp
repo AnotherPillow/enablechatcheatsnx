@@ -1,5 +1,4 @@
 // this code is orignally based on https://github.com/switchbrew/switch-examples/tree/master/fs/save (public domain)
-// get_save() was fixed by masagrator in the Reswitched Discord server
 
 #include <string.h>
 #include <stdio.h>
@@ -32,39 +31,6 @@ const std::string OPENING_SAVE_TAG = "<SaveGame xmlns:xsi=\"http://www.w3.org/20
 const std::string ALLOW_CHAT_CHEATS_TRUE = "<allowChatCheats>true</allowChatCheats>";
 const std::string ALLOW_CHAT_CHEATS_FALSE = "<allowChatCheats>false</allowChatCheats>";
 
-
-Result get_save(u64 *application_id, AccountUid *uid) {
-    Result rc=0;
-    FsSaveDataInfoReader reader;
-    s64 total_entries=0;
-    FsSaveDataInfo info;
-    bool found=0;
-
-    rc = fsOpenSaveDataInfoReader(&reader, FsSaveDataSpaceId_User);//See libnx fs.h.
-    if (R_FAILED(rc)) {
-        printf("fsOpenSaveDataInfoReader() failed: 0x%x\n", rc);
-        return rc;
-    }
-
-    //Find the first savedata with FsSaveDataType_SaveData.
-    while(1) {
-        rc = fsSaveDataInfoReaderRead(&reader, &info, 1, &total_entries);//See libnx fs.h.
-        if (R_FAILED(rc) || total_entries==0) break;
-
-        if (info.save_data_type == FsSaveDataType_Account && info.application_id == *application_id) {//Filter by FsSaveDataType_Account, however note that FsSaveDataSpaceId_User can have non-FsSaveDataType_Account.
-            *uid = info.uid;
-            found = 1;
-            break;
-        }
-    }
-
-    fsSaveDataInfoReaderClose(&reader);
-
-    if (R_SUCCEEDED(rc) && !found) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
-
-    return rc;
-}
-
 int main(int argc, char **argv)
 {
     printf("enablecheatcheatsnx - press + to exit.\n\n");
@@ -84,21 +50,32 @@ int main(int argc, char **argv)
     PadState pad;
     padInitializeDefault(&pad);
 
-    if (R_FAILED(get_save(&application_id, &uid))) {
-        rc = accountInitialize(AccountServiceType_Application);
-        if (R_FAILED(rc)) {
-            printf("accountInitialize() failed: 0x%x\n", rc);
-        }
-
-        if (R_SUCCEEDED(rc)) {
-            rc = accountGetPreselectedUser(&uid);
-            accountExit();
-
-            if (R_FAILED(rc)) {
-                printf("accountGetPreselectedUser() failed: 0x%x\n", rc);
-            }
-        }
+    rc = accountInitialize(AccountServiceType_Application);
+    if (R_FAILED(rc)) {
+        printf("accountInitialize() failed: 0x%x\n", rc);
     }
+
+    if (R_SUCCEEDED(rc)) {
+        // rc = accountGetPreselectedUser(&uid);
+
+        // if (R_FAILED(rc)) {
+        //     printf("accountGetPreselectedUser() failed: 0x%x, using pselShowUserSelector..\n", rc);
+
+        //     /* Create player selection UI settings */
+            
+        // }
+        PselUserSelectionSettings settings;
+        memset(&settings, 0, sizeof(settings));
+
+        rc = pselShowUserSelector(&uid, &settings);
+
+        if (R_FAILED(rc)) {
+            printf("pselShowUserSelector() failed: 0x%x\n", rc);
+        }
+
+        accountExit();
+    }
+
 
     if (R_SUCCEEDED(rc)) {
         printf("Using application_id=0x%016lx\n", application_id);
